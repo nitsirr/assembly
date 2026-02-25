@@ -3,11 +3,11 @@ BITS 64
 global _start
 
 section .data
-    a dq 0 ; 8
-    b dd 0 ; 4
-    c dd 0 ; 4
-    d db 0 ; 1
-    e dw 0 ; 2
+    a dq 2 ; 8
+    b dd 2 ; 4
+    c dd 2 ; 4
+    d db 1 ; 1
+    e dw 1 ; 2
 
 section .text
 
@@ -20,7 +20,7 @@ _start:
 
     ; проверка
     cmp rbx, 0
-    je subz_err
+    je divz_err
 
     idiv rbx
     ; сохраняем
@@ -35,7 +35,7 @@ _start:
 
     ; проверка
     cmp ebx, 0
-    je subz_err
+    je divz_err
 
     idiv ebx
     ; сохраняем
@@ -48,23 +48,13 @@ _start:
     imul ebx ; b*c
 
     ; проверка
-    mov ecx, eax
-    ; sar сдвигает старшим битом
-    sar ecx, 31 ; получаем маску знака
-    cmp edx, ecx
-    jne ovf_err
-
-    shl rdx, 32 ; сдвигаем старшие биты налево внутри регистра rdx
-    or rax, rdx ; получаем целиком число внутри rax
+    jo ovf_err
 
     mov rbx, [a]
     imul rbx ; a * (b*c)
 
     ; проверка
-    mov rcx, rax
-    sar rcx, 63
-    cmp rdx, rcx
-    jne ovf_err
+    jo ovf_err
 
     mov r10, rdx ; старшие биты
     mov r11, rax ; младшие биты
@@ -76,32 +66,22 @@ _start:
     imul ebx
 
     ; проверка
-    mov ecx, eax
-    ; sar сдвигает старшим битом
-    sar ecx, 31 ; получаем маску знака
-    cmp edx, ecx
-    jne ovf_err
-
-    shl rdx, 32
-    or rax, rdx
+    jo ovf_err
 
     ; умножение (c*d)*e
     movsx rbx, word [e]
     imul rbx
 
     ; проверка
-    mov rcx, rax
-    sar rcx, 63
-    cmp rdx, rcx
-    jne ovf_err
+    jo ovf_err
 
-    mov r12, rdx
-    mov r13, rax
+    mov r12, rdx ; старшие
+    mov r13, rax ; младшие
 
 
     ; числитель = a*b*c - c*d*e
     sub r11, r13
-    sbb r10, r12
+    sbb r10, r12 ; учитываем borrow
 
     ; проверка
     jo ovf_err
@@ -121,7 +101,7 @@ _start:
 
     ; проверка
     cmp r8, 0
-    je subz_err
+    je divz_err
     
     idiv r8
 
@@ -132,7 +112,7 @@ exit_suc:
     mov rdi, 0 ; код завершения что все гуд
     jmp exit
 
-subz_err:
+divz_err:
     mov rdi, 2
     jmp exit
 
