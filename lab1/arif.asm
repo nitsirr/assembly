@@ -2,12 +2,14 @@ BITS 64
 
 global _start
 
+; 0x4000000000000000 для ovf 2^62 * 4
+
 section .data
-    a dq 2 ; 8
-    b dd 2 ; 4
-    c dd 2 ; 4
-    d db 1 ; 1
-    e dw 1 ; 2
+    a dq 0x10000000
+    b dd 0x10000000 ; 4
+    c dd 0x40 ; 4
+    d db 0x40 ; 1
+    e dw 0x4000
 
 section .text
 
@@ -33,7 +35,7 @@ _start:
     mov bl, [d]
     movsx ebx, bl
 
-    ; проверка
+    ; проверка 0
     cmp ebx, 0
     je divz_err
 
@@ -43,9 +45,9 @@ _start:
 
 
     ; умножение a*b*c
-    mov eax, [b]
-    mov ebx, [c]
-    imul ebx ; b*c
+    movsx rax, dword [b]
+    movsx rbx, dword [c]
+    imul rbx ; b*c
 
     ; проверка
     jo ovf_err
@@ -54,7 +56,7 @@ _start:
     imul rbx ; a * (b*c)
 
     ; проверка
-    jo ovf_err
+    ; jo ovf_err
 
     mov r10, rdx ; старшие биты
     mov r11, rax ; младшие биты
@@ -65,15 +67,15 @@ _start:
     movsx ebx, byte [d]
     imul ebx
 
-    ; проверка
-    jo ovf_err
+    ; проверка не нужна!
+    ; jo ovf_err
 
     ; умножение (c*d)*e
     movsx rbx, word [e]
     imul rbx
 
-    ; проверка
-    jo ovf_err
+    ; проверка не нужна!
+    ; jo ovf_err
 
     mov r12, rdx ; старшие
     mov r13, rax ; младшие
@@ -117,7 +119,7 @@ divz_err:
     jmp exit
 
 ovf_err:
-    mov rdi, 2
+    mov rdi, 1
     jmp exit
 
 exit:
