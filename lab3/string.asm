@@ -21,6 +21,8 @@ section .data
     line_buffer db LINE_SIZE dup(0)
     result_buffer db LINE_SIZE dup(0)
 
+section .text
+
 _start:
     call parse_args
     call open_file
@@ -35,11 +37,11 @@ _start:
     syscall
 
 parse_args:
-    mov rax, [rsp]
+    mov rax, [rsp + 8]
     cmp rax, 2
     jl error_exit
 
-    mov rdi, [rsp + 16] ; filename
+    mov rdi, [rsp + 24] ; filename
     ret
 
 open_file:
@@ -250,6 +252,7 @@ close_file:
     mov rax, SYS_CLOSE
     mov rdi, [input_fd]
     syscall
+    ret
 
 error_exit:
     mov rax, SYS_EXIT
